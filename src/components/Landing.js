@@ -84,33 +84,31 @@ const Landing = () => {
     setProcessing(true);
     const formData = {
       language_id: language.id,
-      // encode source code in base64
       source_code: btoa(code),
       stdin: btoa(customInput),
     };
     const options = {
       method: "POST",
-      url: process.env.REACT_APP_RAPID_API_URL,
+      url: "https://judge0-ce.p.rapidapi.com/submissions",
       params: { base64_encoded: "true", fields: "*" },
       headers: {
-        "content-type": "application/json",
-        "Content-Type": "application/json",
-        "X-RapidAPI-Host": process.env.REACT_APP_RAPID_API_HOST,
-        "X-RapidAPI-Key": process.env.REACT_APP_RAPID_API_KEY,
+        "Content-type": "application/json",
+        "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
+        "x-rapidapi-key": "ef824a541emshe5019c2d145a231p159007jsne76ae13a6062",
       },
       data: formData,
     };
-
+    console.log(options.data);
     axios
       .request(options)
       .then(function (response) {
-        console.log("res.data", response.data);
         const token = response.data.token;
         checkStatus(token);
       })
       .catch((err) => {
+        console.log("Request URL:", options.url);
         let error = err.response ? err.response.data : err;
-        // get error status
+        console.log("options",options.data)
         let status = err.response.status;
         console.log("status", status);
         if (status === 429) {
@@ -124,16 +122,17 @@ const Landing = () => {
         setProcessing(false);
         console.log("catch block...", error);
       });
+      
   };
 
   const checkStatus = async (token) => {
     const options = {
       method: "GET",
-      url: process.env.REACT_APP_RAPID_API_URL + "/" + token,
+      url: "https://judge0-ce.p.rapidapi.com/submissions" + "/" + token,
       params: { base64_encoded: "true", fields: "*" },
       headers: {
-        "X-RapidAPI-Host": process.env.REACT_APP_RAPID_API_HOST,
-        "X-RapidAPI-Key": process.env.REACT_APP_RAPID_API_KEY,
+        "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
+        "X-RapidAPI-Key": "ef824a541emshe5019c2d145a231p159007jsne76ae13a6062",
       },
     };
     try {
@@ -283,7 +282,7 @@ const Landing = () => {
           {outputDetails && <OutputDetails outputDetails={outputDetails} />}
         </div>
       </div>
-      <Footer />
+
     </>
   );
 };
