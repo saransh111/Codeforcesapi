@@ -19,7 +19,7 @@ const Login = () => {
                     url: "https://codeforces.com/api/user.ratedList?activeOnly=true&includeRetired=false"
                 });
 
-                const rows = res.data.result.slice(0,10000);
+                const rows = res.data.result;
 
                 if (rows && Array.isArray(rows)) { // Check if rows exists and is an array
                     const totalHandles = [];
