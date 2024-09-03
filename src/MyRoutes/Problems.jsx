@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import TopBar from '../components/Topbar';
+import Pagination from './Pagination';
 import axios from 'axios';
 import { TextField, Button, Card, CardContent, Typography, Grid, Box, Divider } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -7,34 +8,73 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Problems() {
     const [problems, setProblems] = useState([]);
+    const [translatedNames, setTranslatedNames] = useState([]);
     const [leftFilter, setLeftFilter] = useState('');
     const [rightFilter, setRightFilter] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
+
     useEffect(() => {
         async function fetchProblems() {
             try {
                 const response = await axios.get('https://codeforces.com/api/problemset.problems?tags=implementation');
-                const data = response.data.result.problems.slice(0, 100);
+                const data = response.data.result.problems.slice(currentPage * 20 - 20, currentPage * 20);
                 setProblems(data);
             } catch (error) {
                 console.error("Error fetching problems:", error);
             }
         }
         fetchProblems();
-    }, []);
+    }, [currentPage]);
+
+    useEffect(() => {
+        async function translateNames() {
+            const translations = await Promise.all(problems.map(problem => ghar(problem.name)));
+            setTranslatedNames(translations);
+        }
+        translateNames();
+    }, [problems]);
+
+    function handlePagination(pageNumber) {
+        setCurrentPage(pageNumber);
+    }
 
     const filteredProblems = problems.filter(problem =>
         (!leftFilter || problem.rating >= leftFilter) &&
         (!rightFilter || problem.rating <= rightFilter)
     );
 
-    function movetoproblemsolver(){
-        navigate("/solve_problem")
+    function movetoproblemsolver() {
+        navigate("/solve_problem");
     }
-    function handleProblemClick(contest, index) {
-        window.open(`https://codeforces.com/problemset/problem/${contest}/${index}`, '_blank', 'noopener,noreferrer');
+
+    function handleProblemClick(contestId, index) {
+        window.open(`https://codeforces.com/problemset/problem/${contestId}/${index}`, '_blank', 'noopener,noreferrer');
     }
-    
+
+    async function ghar(text) {
+        const options = {
+            method: 'POST',
+            url: 'https://google-api31.p.rapidapi.com/translate',
+            headers: {
+                'x-rapidapi-key': 'ef824a541emshe5019c2d145a231p159007jsne76ae13a6062',
+                'x-rapidapi-host': 'google-api31.p.rapidapi.com',
+                'Content-Type': 'application/json'
+            },
+            data: {
+                text: text,
+                to: 'en',
+                from_lang: ''
+            }
+        };
+        try {
+            const response = await axios.request(options);
+            return response.data.translated;
+        } catch (error) {
+            console.error("Could not translate:", error);
+            return text;
+        }
+    }
 
     return (
         <div>
@@ -84,7 +124,7 @@ export default function Problems() {
                             <Card variant="outlined">
                                 <CardContent>
                                     <Typography variant="h6" component="div" gutterBottom>
-                                        {problem.name}
+                                        {translatedNames[index] || problem.name} {/* Use translated name */}
                                     </Typography>
                                     <Divider sx={{ marginBottom: 1 }} />
                                     <Typography color="textSecondary" gutterBottom>
@@ -95,7 +135,7 @@ export default function Problems() {
                                             variant="outlined"
                                             color="primary"
                                             sx={{ marginRight: 1 }}
-                                            onClick={()=> handleProblemClick(problem.contestId,problem.index)}
+                                            onClick={() => handleProblemClick(problem.contestId, problem.index)}
                                         >
                                             Problem Statement
                                         </Button>
@@ -127,6 +167,12 @@ export default function Problems() {
                     ))}
                 </Grid>
             </Box>
+            <Pagination
+                length={200} 
+                postsPerPage={20}
+                handlePagination={handlePagination}
+                currentPage={currentPage}
+            />
         </div>
     );
 }
